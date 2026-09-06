@@ -541,15 +541,10 @@ def find_service_account_file():
 @st.cache_resource
 def get_google_client():
 
-    service_file = find_service_account_file()
+    credentials_info = dict(st.secrets["gcp_service_account"])
 
-    if service_file is None:
-        raise FileNotFoundError(
-            "Service account JSON file was not found in the application folder."
-        )
-
-    credentials = Credentials.from_service_account_file(
-        str(service_file),
+    credentials = Credentials.from_service_account_info(
+        credentials_info,
         scopes=[
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive"
@@ -561,15 +556,15 @@ def get_google_client():
 
 @st.cache_resource
 def get_worksheet():
-
     client = get_google_client()
 
-    spreadsheet_id = st.secrets["google_sheet"]["spreadsheet_id"]
-    worksheet_name = st.secrets["google_sheet"]["worksheet_name"]
+    spreadsheet = client.open_by_key(
+        st.secrets["google_sheet"]["spreadsheet_id"]
+    )
 
-    spreadsheet = client.open_by_key(spreadsheet_id)
-
-    return spreadsheet.worksheet(worksheet_name)
+    return spreadsheet.worksheet(
+        st.secrets["google_sheet"]["worksheet_name"]
+    )
 
 
 # ============================================================
